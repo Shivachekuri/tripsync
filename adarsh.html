@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TripSync – Smart Travel Planner</title>
+    <meta name="description"
+        content="TripSync helps you plan trips, manage itineraries, track expenses, discover eateries, and store travel documents in one beautiful dashboard." />
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+    <!-- ════════ AUTH SCREEN ════════ -->
+    <div class="auth-screen" id="authScreen">
+        <div class="auth-particles">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+        </div>
+        <div class="auth-card">
+            <div class="auth-logo">
+                <div class="auth-logo-icon">✈️</div>
+                <h1>TripSync</h1>
+                <p>Smart Travel Planner</p>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" onsubmit="loginUser(event)">
+                <h2 class="auth-title">Welcome Back</h2>
+                <p class="auth-subtitle">Sign in to your account</p>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUsername" placeholder="Enter username" required />
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter password" required />
+                </div>
+                <div id="loginError" class="auth-error"></div>
+                <button type="submit" class="btn btn-primary btn-block auth-btn">Sign In</button>
+                <p class="auth-switch">Don't have an account? <a href="#"
+                        onclick="toggleAuth(event, 'register')">Register</a></p>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" style="display:none;" onsubmit="registerUser(event)">
+                <h2 class="auth-title">Create Account</h2>
+                <p class="auth-subtitle">Start planning your trips today</p>
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="regFullName" placeholder="Your full name" required />
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="regUsername" placeholder="Choose a username" required />
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="regPassword" placeholder="Create password" required minlength="4" />
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" id="regConfirmPassword" placeholder="Confirm password" required
+                        minlength="4" />
+                </div>
+                <div id="registerError" class="auth-error"></div>
+                <button type="submit" class="btn btn-primary btn-block auth-btn">Create Account</button>
+                <p class="auth-switch">Already have an account? <a href="#" onclick="toggleAuth(event, 'login')">Sign
+                        In</a></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- ════════ APP WRAPPER ════════ -->
+    <div class="app-wrapper" id="appWrapper" style="display:none;">
+
+        <!-- ════════ Sidebar ════════ -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-logo">
+                    <div class="logo-icon">✈️</div>
+                    <div class="logo-text">
+                        <h1>TripSync</h1>
+                        <span>Smart Travel Planner</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-trips">
+                <div class="trips-label">My Trips</div>
+                <div id="tripList"></div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="btn btn-primary btn-block" id="btnAddTrip" onclick="openModal('tripModal')">
+                    ＋ New Trip
+                </button>
+                <div class="sidebar-user" id="sidebarUser">
+                    <div class="user-avatar" id="userAvatar">U</div>
+                    <div class="user-name" id="userName">User</div>
+                    <button class="btn-logout" onclick="logoutUser()" title="Logout">🚪</button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ════════ Main ════════ -->
+        <main class="main-content">
+
+            <!-- No Trip Selected State -->
+            <div class="no-trip-selected" id="noTripView">
+                <div class="no-trip-icon">🌍</div>
+                <h3>Welcome to TripSync</h3>
+                <p>Select a trip from the sidebar or create a new one to get started with your travel planning.</p>
+            </div>
+
+            <!-- Trip View -->
+            <div id="tripView" class="hidden" style="display:none;flex-direction:column;height:100%;">
+
+                <!-- Header -->
+                <div class="main-header">
+                    <div class="main-header-left">
+                        <h2 id="headerTripName">Trip Dashboard</h2>
+                        <p id="headerTripLocation">Select a trip</p>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-secondary btn-sm" id="btnAddAction" style="display:none;"></button>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="tabs-container">
+                    <div class="tabs">
+                        <button class="tab active" data-tab="dashboard" onclick="switchTab('dashboard')">
+                            📊 Dashboard
+                        </button>
+                        <button class="tab" data-tab="itinerary" onclick="switchTab('itinerary')">
+                            📅 Itinerary <span class="tab-badge" id="badgeItinerary">0</span>
+                        </button>
+                        <button class="tab" data-tab="expenses" onclick="switchTab('expenses')">
+                            💰 Expenses <span class="tab-badge" id="badgeExpenses">0</span>
+                        </button>
+                        <button class="tab" data-tab="eateries" onclick="switchTab('eateries')">
+                            🍽️ Eateries <span class="tab-badge" id="badgeEateries">0</span>
+                        </button>
+                        <button class="tab" data-tab="documents" onclick="switchTab('documents')">
+                            📄 Documents <span class="tab-badge" id="badgeDocs">0</span>
+                        </button>
+                        <button class="tab" data-tab="explore" onclick="switchTab('explore'); initExploreNearby();">
+                            📍 Explore Nearby
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="tab-content">
+
+                    <!-- ── Dashboard Panel ── -->
+                    <div class="tab-panel active" id="panel-dashboard">
+                        <div class="trip-overview" id="tripOverview"></div>
+                        <div class="stats-grid" id="statsGrid"></div>
+                        <div class="section">
+                            <div class="section-header">
+                                <h3 class="section-title">Upcoming Activities</h3>
+                            </div>
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Day</th>
+                                            <th>Activity</th>
+                                            <th>Time</th>
+                                            <th>Location</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="dashItineraryBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- Expense Split Summary on Dashboard -->
+                        <div class="section">
+                            <div class="section-header">
+                                <h3 class="section-title">Expense Split Summary</h3>
+                            </div>
+                            <div class="split-summary-grid" id="dashSplitSummary"></div>
+                        </div>
+                    </div>
+
+                    <!-- ── Itinerary Panel ── -->
+                    <div class="tab-panel" id="panel-itinerary">
+                        <div class="section">
+                            <div class="section-header">
+                                <h3 class="section-title">Trip Itinerary</h3>
+                                <button class="btn btn-primary btn-sm" onclick="openModal('itineraryModal')">＋ Add
+                                    Activity</button>
+                            </div>
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Day</th>
+                                            <th>Activity Name</th>
+                                            <th>Time</th>
+                                            <th>Location</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="itineraryBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ── Expenses Panel ── -->
+                    <div class="tab-panel" id="panel-expenses">
+                        <div class="expense-summary" id="expenseSummary"></div>
+                        <div class="section">
+                            <div class="section-header">
+                                <h3 class="section-title">All Expenses</h3>
+                                <button class="btn btn-primary btn-sm" onclick="openModal('expenseModal')">＋ Add
+                                    Expense</button>
+                            </div>
+                            <div class="table-wrapper">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Category</th>
+                                            <th>Amount</th>
+                                            <th>Paid By</th>
+                                            <th>Split Among</th>
+                                            <th></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="expenseBody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <!-- Per-Person Split Breakdown -->
+                        <div class="section">
+                            <div class="section-header">
+                                <h3 class="section-title">💡 Per-Person Split Breakdown</h3>
+                            </div>
+                            <div class="split-breakdown" id="splitBreakdown"></div>
+                        </div>
+                    </div>
+
+                    <!-- ── Eateries Panel ── -->
+                    <div class="tab-panel" id="panel-eateries">
+                        <div class="section">
+                            <div class="section-header">
+                                <h3 class="section-title">Eatery Discovery</h3>
+                                <button class="btn btn-primary btn-sm" onclick="openModal('eateryModal')">＋ Add
+                                    Eatery</button>
+                            </div>
+                            <!-- Filters -->
+                            <div class="eatery-filters">
+                                <div class="filter-group">
+                                    <label>Cuisine</label>
+                                    <select id="filterCuisine" onchange="renderAll()">
+                                        <option value="">All Cuisines</option>
+                                        <option value="Indian">Indian</option>
+                                        <option value="Chinese">Chinese</option>
+                                        <option value="Italian">Italian</option>
+                                        <option value="Mexican">Mexican</option>
+                                        <option value="Japanese">Japanese</option>
+                                        <option value="Cafe">Cafe</option>
+                                        <option value="Street Food">Street Food</option>
+                                        <option value="Seafood">Seafood</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label>Max Budget (₹)</label>
+                                    <input type="number" id="filterBudget" placeholder="e.g. 500" min="0"
+                                        onchange="renderAll()" />
+                                </div>
+                            </div>
+                            <div class="eatery-grid" id="eateryGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- ── Documents Panel ── -->
+                    <div class="tab-panel" id="panel-documents">
+                        <div class="section">
+                            <div class="section-header">
+                                <h3 class="section-title">Travel Documents</h3>
+                            </div>
+                            <div class="upload-area" id="uploadArea"
+                                onclick="document.getElementById('fileInput').click()">
+                                <div class="upload-area-icon">📁</div>
+                                <p>Click to upload or drag & drop</p>
+                                <span>Supports PDF, images, and documents</span>
+                                <input type="file" id="fileInput" style="display:none"
+                                    onchange="handleFileUpload(event)" multiple />
+                            </div>
+                            <div class="docs-grid" id="docsGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- ── Explore Nearby Panel ── -->
+                    <div class="tab-panel" id="panel-explore">
+                        <div class="section">
+                            <div class="section-header">
+                                <h3 class="section-title">📍 Explore Nearby</h3>
+                                <button class="btn btn-primary btn-sm" id="btnRefreshLocation"
+                                    onclick="fetchNearbyPlaces()">
+                                    🔄 Refresh Location
+                                </button>
+                            </div>
+                            <p class="explore-subtitle" id="exploreStatus">Click below to detect your location and
+                                discover nearby places.</p>
+
+                            <!-- Category Filters -->
+                            <div class="explore-filters" id="exploreFilters" style="display:none;">
+                                <button class="explore-filter-btn active" data-category="all"
+                                    onclick="filterExploreCategory('all', this)">🌐 All</button>
+                                <button class="explore-filter-btn" data-category="restaurant"
+                                    onclick="filterExploreCategory('restaurant', this)">🍽️ Restaurants</button>
+                                <button class="explore-filter-btn" data-category="hotel"
+                                    onclick="filterExploreCategory('hotel', this)">🏨 Hotels</button>
+                                <button class="explore-filter-btn" data-category="cafe"
+                                    onclick="filterExploreCategory('cafe', this)">☕ Cafes</button>
+                                <button class="explore-filter-btn" data-category="fast_food"
+                                    onclick="filterExploreCategory('fast_food', this)">🍔 Fast Food</button>
+                                <button class="explore-filter-btn" data-category="bar"
+                                    onclick="filterExploreCategory('bar', this)">🍺 Bars</button>
+                            </div>
+
+                            <!-- Detect Location Button -->
+                            <div class="explore-detect" id="exploreDetect">
+                                <button class="btn btn-primary explore-detect-btn" onclick="fetchNearbyPlaces()">
+                                    📍 Detect My Location & Explore
+                                </button>
+                            </div>
+
+                            <!-- Loading Spinner -->
+                            <div class="explore-loading" id="exploreLoading" style="display:none;">
+                                <div class="explore-spinner"></div>
+                                <p>Finding places near you...</p>
+                            </div>
+
+                            <!-- Results Grid -->
+                            <div class="explore-grid" id="exploreGrid"></div>
+
+                            <!-- Embedded Map -->
+                            <div class="explore-map-section" id="exploreMapSection" style="display:none;">
+                                <h4 class="explore-map-title">🗺️ Map View</h4>
+                                <div class="explore-map-container">
+                                    <iframe id="exploreMapFrame" class="explore-map-iframe" frameborder="0"
+                                        allowfullscreen loading="lazy"></iframe>
+                                </div>
+                            </div>
+
+                            <!-- Live Tracking Panel -->
+                            <div class="live-tracking-panel" id="liveTrackingPanel" style="display:none;">
+                                <div class="tracking-header">
+                                    <div class="tracking-status">
+                                        <span class="tracking-dot"></span>
+                                        <span id="trackingStatusText">Tracking your journey...</span>
+                                    </div>
+                                    <button class="btn btn-danger btn-sm" onclick="stopJourney()">⏹ Stop
+                                        Journey</button>
+                                </div>
+                                <div class="tracking-info-grid">
+                                    <div class="tracking-info-card">
+                                        <div class="tracking-info-icon">📍</div>
+                                        <div class="tracking-info-label">Current Location</div>
+                                        <div class="tracking-info-value" id="trackingCoords">Detecting...</div>
+                                    </div>
+                                    <div class="tracking-info-card">
+                                        <div class="tracking-info-icon">🚗</div>
+                                        <div class="tracking-info-label">Vehicle</div>
+                                        <div class="tracking-info-value" id="trackingVehicle">—</div>
+                                    </div>
+                                    <div class="tracking-info-card">
+                                        <div class="tracking-info-icon">🏁</div>
+                                        <div class="tracking-info-label">Destination</div>
+                                        <div class="tracking-info-value" id="trackingDestination">—</div>
+                                    </div>
+                                    <div class="tracking-info-card">
+                                        <div class="tracking-info-icon">📏</div>
+                                        <div class="tracking-info-label">Distance</div>
+                                        <div class="tracking-info-value" id="trackingDistance">—</div>
+                                    </div>
+                                </div>
+                                <div class="tracking-map-container">
+                                    <iframe id="trackingMapFrame" class="tracking-map-iframe" frameborder="0"
+                                        allowfullscreen></iframe>
+                                </div>
+                                <a href="#" id="trackingGoogleMapsLink" target="_blank"
+                                    class="btn btn-primary btn-block tracking-open-maps">
+                                    🗺️ Open Full Navigation in Google Maps
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+
+    </div>
+
+    <!-- ════════ Modals ════════ -->
+
+    <!-- Add Trip Modal -->
+    <div class="modal-overlay" id="tripModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>✈️ New Trip</h3>
+                <button class="modal-close" onclick="closeModal('tripModal')">✕</button>
+            </div>
+            <form onsubmit="addTrip(event)">
+                <div class="form-group">
+                    <label>Trip Name</label>
+                    <input type="text" id="tripName" placeholder="e.g. Goa Beach Vacation" required />
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" id="tripLocation" placeholder="e.g. Goa, India" required />
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" id="tripStartDate" required />
+                    </div>
+                    <div class="form-group">
+                        <label>End Date</label>
+                        <input type="date" id="tripEndDate" required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Group Members (comma separated)</label>
+                    <input type="text" id="tripMembers" placeholder="e.g. Alice, Bob, Charlie" />
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('tripModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create Trip</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Itinerary Modal -->
+    <div class="modal-overlay" id="itineraryModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>📅 Add Activity</h3>
+                <button class="modal-close" onclick="closeModal('itineraryModal')">✕</button>
+            </div>
+            <form onsubmit="addActivity(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Day</label>
+                        <input type="number" id="actDay" min="1" placeholder="1" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Time</label>
+                        <input type="text" id="actTime" placeholder="e.g. 9:00 AM" required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Activity Name</label>
+                    <input type="text" id="actName" placeholder="e.g. Beach Visit" required />
+                </div>
+                <div class="form-group">
+                    <label>Location</label>
+                    <input type="text" id="actLocation" placeholder="e.g. Calangute Beach" required />
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary"
+                        onclick="closeModal('itineraryModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Activity</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Expense Modal -->
+    <div class="modal-overlay" id="expenseModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>💰 Add Expense</h3>
+                <button class="modal-close" onclick="closeModal('expenseModal')">✕</button>
+            </div>
+            <form onsubmit="addExpense(event)">
+                <div class="form-group">
+                    <label>Category</label>
+                    <select id="expCategory" required>
+                        <option value="">Select category</option>
+                        <option value="Food">🍽️ Food</option>
+                        <option value="Transport">🚕 Transport</option>
+                        <option value="Hotel">🏨 Hotel</option>
+                        <option value="Shopping">🛍️ Shopping</option>
+                        <option value="Tickets">🎟️ Tickets</option>
+                        <option value="Adventure">🏄 Adventure</option>
+                        <option value="Fuel">⛽ Fuel</option>
+                        <option value="Medical">💊 Medical</option>
+                        <option value="Other">💳 Other</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Amount (₹)</label>
+                        <input type="number" id="expAmount" min="0" step="0.01" placeholder="500" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Paid By</label>
+                        <input type="text" id="expPerson" placeholder="e.g. Jeveria" required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Split Among (comma separated, leave empty = paid by person only)</label>
+                    <input type="text" id="expSplitAmong" placeholder="e.g. Alice, Bob, Charlie" />
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('expenseModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Eatery Modal -->
+    <div class="modal-overlay" id="eateryModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>🍽️ Add Eatery</h3>
+                <button class="modal-close" onclick="closeModal('eateryModal')">✕</button>
+            </div>
+            <form onsubmit="addEatery(event)">
+                <div class="form-group">
+                    <label>Restaurant Name</label>
+                    <input type="text" id="eateryName" placeholder="e.g. The Beach Shack" required />
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Cuisine</label>
+                        <select id="eateryCuisine" required>
+                            <option value="">Select type</option>
+                            <option value="Indian">Indian</option>
+                            <option value="Chinese">Chinese</option>
+                            <option value="Italian">Italian</option>
+                            <option value="Mexican">Mexican</option>
+                            <option value="Japanese">Japanese</option>
+                            <option value="Cafe">Cafe</option>
+                            <option value="Street Food">Street Food</option>
+                            <option value="Seafood">Seafood</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Price per Person (₹)</label>
+                        <input type="number" id="eateryPrice" min="0" placeholder="e.g. 300" required />
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Rating (1-5)</label>
+                        <input type="number" id="eateryRating" min="1" max="5" step="0.1" placeholder="4.2" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Location</label>
+                        <input type="text" id="eateryLocation" placeholder="e.g. Near Baga Beach" required />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Notes (optional)</label>
+                    <input type="text" id="eateryNotes" placeholder="e.g. Try the butter garlic prawns!" />
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('eateryModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add Eatery</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Journey Modal -->
+    <div class="modal-overlay" id="journeyModal">
+        <div class="modal journey-modal">
+            <div class="modal-header">
+                <h3>🚀 Start Journey</h3>
+                <button class="modal-close" onclick="closeModal('journeyModal')">✕</button>
+            </div>
+            <div class="journey-destination" id="journeyDestInfo"></div>
+            <div class="journey-section">
+                <h4>Choose your vehicle</h4>
+                <div class="vehicle-grid" id="vehicleGrid">
+                    <div class="vehicle-option active" data-mode="driving" onclick="selectVehicle(this, 'driving')">
+                        <div class="vehicle-icon">🚗</div>
+                        <span>Car</span>
+                    </div>
+                    <div class="vehicle-option" data-mode="two-wheeler" onclick="selectVehicle(this, 'two-wheeler')">
+                        <div class="vehicle-icon">🏍️</div>
+                        <span>Bike</span>
+                    </div>
+                    <div class="vehicle-option" data-mode="walking" onclick="selectVehicle(this, 'walking')">
+                        <div class="vehicle-icon">🚶</div>
+                        <span>Walk</span>
+                    </div>
+                    <div class="vehicle-option" data-mode="transit" onclick="selectVehicle(this, 'transit')">
+                        <div class="vehicle-icon">🚌</div>
+                        <span>Bus</span>
+                    </div>
+                    <div class="vehicle-option" data-mode="bicycling" onclick="selectVehicle(this, 'bicycling')">
+                        <div class="vehicle-icon">🚲</div>
+                        <span>Cycle</span>
+                    </div>
+                    <div class="vehicle-option" data-mode="auto" onclick="selectVehicle(this, 'auto')">
+                        <div class="vehicle-icon">🛺</div>
+                        <span>Auto</span>
+                    </div>
+                </div>
+            </div>
+            <div class="journey-actions">
+                <button class="btn btn-secondary" onclick="closeModal('journeyModal')">Cancel</button>
+                <button class="btn btn-primary journey-start-btn" onclick="confirmStartJourney()">
+                    🚀 Start Journey
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
